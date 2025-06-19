@@ -3,22 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestão de Investimentos - Meu Curso</title>
+    <title>Gestão de Investimentos - Google Sheets</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         .gradient-bg {
             background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
-        }
-        .card-hover:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        }
-        .blink {
-            animation: blink-animation 1s steps(2, start) infinite;
-        }
-        @keyframes blink-animation {
-            to { visibility: hidden; }
         }
     </style>
 </head>
@@ -26,16 +16,19 @@
     <div class="gradient-bg text-white py-8 px-4 shadow-lg">
         <div class="container mx-auto">
             <h1 class="text-3xl font-bold mb-2">Gestão de Investimentos</h1>
-            <p class="opacity-90">Registre seus ativos e acompanhe seu desempenho</p>
+            <p class="opacity-90">Registre seus ativos no Google Planilhas</p>
         </div>
     </div>
 
     <div class="container mx-auto px-4 py-8">
-        <!-- Painel de Operações -->
         <div class="bg-white rounded-xl shadow-md p-6 mb-8">
             <h2 class="text-xl font-semibold mb-4 text-gray-800">Nova Operação</h2>
             
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                <div>
+                    <label class="block text-gray-700 mb-1">E-mail</label>
+                    <input type="email" id="email" class="w-full px-4 py-2 border rounded-lg" placeholder="seu@email.com">
+                </div>
                 <div>
                     <label class="block text-gray-700 mb-1">Tipo</label>
                     <select id="tipoOperacao" class="w-full px-4 py-2 border rounded-lg">
@@ -45,7 +38,7 @@
                 </div>
                 <div>
                     <label class="block text-gray-700 mb-1">Ativo (ex: PETR4)</label>
-                    <input type="text" id="nomeAtivo" class="w-full px-4 py-2 border rounded-lg" placeholder="Código do ativo">
+                    <input type="text" id="ativo" class="w-full px-4 py-2 border rounded-lg" placeholder="Código do ativo">
                 </div>
                 <div>
                     <label class="block text-gray-700 mb-1">Quantidade</label>
@@ -56,243 +49,101 @@
                     <input type="number" step="0.01" id="precoUnitario" class="w-full px-4 py-2 border rounded-lg" placeholder="Ex: 32.50">
                 </div>
             </div>
-            <button id="registrarBtn" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-lg">
-                Registrar Operação
+            <button onclick="registrarOperacao()" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-lg">
+                Registrar no Google Sheets
             </button>
         </div>
 
-        <!-- Dashboard -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-            <!-- Resumo -->
-            <div class="bg-white rounded-xl shadow-md p-6">
-                <h2 class="text-xl font-semibold mb-4 text-gray-800">Resumo</h2>
-                <div class="space-y-3">
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Total Investido:</span>
-                        <span class="font-medium" id="totalInvestido">R$ 0,00</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Valor Atual:</span>
-                        <span class="font-medium" id="valorAtual">R$ 0,00</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Rentabilidade:</span>
-                        <span class="font-medium" id="rentabilidade">0,00%</span>
-                    </div>
-                </div>
-                <button onclick="exportarDados()" class="mt-6 w-full bg-green-600 text-white py-2 rounded-lg">
-                    Exportar Meus Dados
-                </button>
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">Meus Investimentos</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Operação</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ativo</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantidade</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preço Unitário</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200" id="tabelaInvestimentos">
+                        <!-- Dados serão carregados aqui -->
+                    </tbody>
+                </table>
             </div>
-
-            <!-- Gráfico -->
-            <div class="bg-white rounded-xl shadow-md p-6 lg:col-span-2">
-                <h2 class="text-xl font-semibold mb-4 text-gray-800">Distribuição da Carteira</h2>
-                <canvas id="distribuicaoChart"></canvas>
-            </div>
-        </div>
-
-        <!-- Lista de Ativos -->
-        <div class="bg-white rounded-xl shadow-md p-6 mb-8 overflow-x-auto">
-            <h2 class="text-xl font-semibold mb-4 text-gray-800">Seus Ativos</h2>
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ativo</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantidade</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preço Médio</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor Investido</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rentabilidade</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200" id="ativosBody">
-                    <!-- Dados serão preenchidos automaticamente -->
-                </tbody>
-            </table>
         </div>
     </div>
 
     <script>
-        // Dados da carteira
-        let carteira = {
-            ativos: {},
-            operacoes: [],
-            precosAtuais: {
-                'PETR4': 33.50,
-                'VALE3': 68.42,
-                'ITUB4': 22.10,
-                'MXRF11': 9.85
-                // Adicione outros ativos conforme necessário
-            }
-        };
+        // Substitua pela URL do seu Web App do Google Script
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxdTBI-WakpEfBPn_GNgfCD9yKWDlvwtHP1mspVh6N65dru4KZ3jreEIUPnSAe4rWX2kA/exec";
 
-        // Elementos do DOM
-        const registrarBtn = document.getElementById('registrarBtn');
-        const ativosBody = document.getElementById('ativosBody');
+        async function registrarOperacao() {
+            const email = document.getElementById("email").value;
+            const tipoOperacao = document.getElementById("tipoOperacao").value;
+            const ativo = document.getElementById("ativo").value.toUpperCase();
+            const quantidade = parseFloat(document.getElementById("quantidade").value);
+            const precoUnitario = parseFloat(document.getElementById("precoUnitario").value);
 
-        // Carregar dados salvos ao iniciar
-        document.addEventListener('DOMContentLoaded', function() {
-            carregarDados();
-            criarGrafico();
-            registrarBtn.addEventListener('click', registrarOperacao);
-        });
-
-        // Registrar nova operação
-        function registrarOperacao() {
-            const ativo = document.getElementById('nomeAtivo').value.trim().toUpperCase();
-            const qtd = parseFloat(document.getElementById('quantidade').value);
-            const preco = parseFloat(document.getElementById('precoUnitario').value);
-            const tipo = document.getElementById('tipoOperacao').value;
-
-            // Validar dados
-            if (!ativo || isNaN(qtd) || qtd <= 0 || isNaN(preco) || preco <= 0) {
+            if (!email || !ativo || isNaN(quantidade) || isNaN(precoUnitario)) {
                 alert("Preencha todos os campos corretamente!");
                 return;
             }
 
-            // Criar operação
-            const operacao = {
-                id: Date.now(),
-                tipo,
+            const dados = {
+                email,
+                tipoOperacao,
                 ativo,
-                quantidade: qtd,
-                precoUnitario: preco,
-                data: new Date().toLocaleDateString('pt-BR')
+                quantidade,
+                precoUnitario
             };
 
-            // Processar operação
-            processarOperacao(operacao);
-            salvarDados();
-            atualizarInterface();
-            limparFormulario();
-        }
-
-        function processarOperacao(op) {
-            carteira.operacoes.push(op);
-
-            // Inicializar ativo se não existir
-            if (!carteira.ativos[op.ativo]) {
-                carteira.ativos[op.ativo] = {
-                    quantidade: 0,
-                    precoMedio: 0,
-                    valorInvestido: 0
-                };
-            }
-
-            const ativo = carteira.ativos[op.ativo];
-
-            if (op.tipo === 'compra') {
-                // Atualizar preço médio
-                ativo.precoMedio = (
-                    (ativo.valorInvestido + (op.quantidade * op.precoUnitario)) / 
-                    (ativo.quantidade + op.quantidade)
-                );
-                ativo.quantidade += op.quantidade;
-                ativo.valorInvestido = ativo.quantidade * ativo.precoMedio;
-            } else {
-                // Validar venda
-                if (op.quantidade > ativo.quantidade) {
-                    alert("Você não possui essa quantidade para vender!");
-                    return;
-                }
-                ativo.quantidade -= op.quantidade;
-                ativo.valorInvestido = ativo.quantidade * ativo.precoMedio;
+            try {
+                const response = await fetch(WEB_APP_URL, {
+                    method: "POST",
+                    body: JSON.stringify(dados)
+                });
+                const resultado = await response.text();
+                alert("Operação registrada com sucesso!");
+                carregarDados();
+            } catch (erro) {
+                alert("Erro ao registrar: " + erro.message);
             }
         }
 
-        // Atualizar interface
-        function atualizarInterface() {
-            let totalInvestido = 0;
-            let valorAtual = 0;
-            ativosBody.innerHTML = '';
+        async function carregarDados() {
+            const email = document.getElementById("email").value;
+            if (!email) return;
 
-            for (const [ativo, dados] of Object.entries(carteira.ativos)) {
-                if (dados.quantidade <= 0) continue;
-
-                const precoAtual = carteira.precosAtuais[ativo] || dados.precoMedio;
-                const valorAtualAtivo = dados.quantidade * precoAtual;
-                const rentabilidade = ((valorAtualAtivo - dados.valorInvestido) / dados.valorInvestido * 100);
-
-                totalInvestido += dados.valorInvestido;
-                valorAtual += valorAtualAtivo;
-
-                ativosBody.innerHTML += `
-                    <tr>
-                        <td class="px-6 py-4 whitespace-nowrap font-medium">${ativo}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${dados.quantidade}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">R$ ${dados.precoMedio.toFixed(2)}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">R$ ${dados.valorInvestido.toFixed(2)}</td>
-                        <td class="px-6 py-4 whitespace-nowrap ${rentabilidade >= 0 ? 'text-green-600' : 'text-red-600'}">
-                            ${rentabilidade.toFixed(2)}%
-                        </td>
-                    </tr>
-                `;
-            }
-
-            // Atualizar totais
-            document.getElementById('totalInvestido').textContent = `R$ ${totalInvestido.toFixed(2)}`;
-            document.getElementById('valorAtual').textContent = `R$ ${valorAtual.toFixed(2)}`;
-            document.getElementById('rentabilidade').textContent = 
-                `${(((valorAtual - totalInvestido) / totalInvestido) * 100).toFixed(2)}%`;
-        }
-
-        // Gráfico
-        function criarGrafico() {
-            const ctx = document.getElementById('distribuicaoChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        data: [],
-                        backgroundColor: [
-                            '#3b82f6', '#10b981', '#f59e0b', '#6366f1'
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { position: 'bottom' }
-                    }
-                }
-            });
-        }
-
-        function atualizarGrafico() {
-            // Implementação similar à anterior
-        }
-
-        // Sistema de persistência
-        function salvarDados() {
-            localStorage.setItem('minhaCarteira', JSON.stringify(carteira));
-        }
-
-        function carregarDados() {
-            const dados = localStorage.getItem('minhaCarteira');
-            if (dados) {
-                carteira = JSON.parse(dados);
-                atualizarInterface();
+            try {
+                const response = await fetch(`${WEB_APP_URL}?email=${encodeURIComponent(email)}`);
+                const dados = await response.json();
+                atualizarTabela(dados);
+            } catch (erro) {
+                console.error("Erro ao carregar dados:", erro);
             }
         }
 
-        function exportarDados() {
-            const data = JSON.stringify(carteira);
-            const blob = new Blob([data], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `backup-carteira-${new Date().toISOString().slice(0,10)}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        }
+        function atualizarTabela(dados) {
+            const tabela = document.getElementById("tabelaInvestimentos");
+            tabela.innerHTML = "";
 
-        function limparFormulario() {
-            document.getElementById('nomeAtivo').value = '';
-            document.getElementById('quantidade').value = '';
-            document.getElementById('precoUnitario').value = '';
+            if (dados && dados.length > 1) { // Ignora o cabeçalho
+                dados.slice(1).forEach(linha => {
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap">${linha[0]}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${linha[1]}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${linha[2]}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${linha[3]}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">R$ ${linha[4]}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">R$ ${linha[5]}</td>
+                    `;
+                    tabela.appendChild(tr);
+                });
+            }
         }
     </script>
 </body>
